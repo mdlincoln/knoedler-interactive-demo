@@ -5,15 +5,8 @@
 # http://shiny.rstudio.com
 #
 
-library(shiny)
-
 shinyUI(fluidPage(
-
-  sidebarLayout(
-  sidebarPanel(
-    uiOutput("newdata_inputs")
-  ),
-  mainPanel(
-    h1(textOutput("prediction_probability")))
-)
+  inputPanel(uiOutput("newdata_inputs")),
+  h1(textOutput("prediction_probability")),
+  tableOutput("distances")
 ))

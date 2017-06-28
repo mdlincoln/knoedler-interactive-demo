@@ -5,13 +5,6 @@
 # http://shiny.rstudio.com
 #
 
-library(shiny)
-library(ggplot2)
-library(dplyr)
-library(purrr)
-library(forcats)
-library(randomForest)
-
 shinyServer(function(input, output) {
 
   factor_input <- function(df, cname) {
@@ -19,18 +12,20 @@ shinyServer(function(input, output) {
   }
 
   numeric_input <- function(df, cname) {
-    sliderInput(cname, label = cname, min = min(df[[cname]]), max = max(df[[cname]]), value = median(df[[cname]]))
+    sliderInput(cname, label = cname, min = quantile(df[[cname]], 0.05), max = quantile(df[[cname]], 0.90), value = median(df[[cname]]))
   }
 
   output$newdata_inputs <- renderUI({
-    vartypes <- map(kmodel$train_data, class)
+    vartypes <- map_chr(kmodel$train_data, class)
 
+    fluidRow(
     map2(vartypes, names(vartypes), function(x, y) {
       input_function <- switch(x,
                              "factor" = factor_input,
                              "numeric" = numeric_input)
       input_function(kmodel$train_data, y)
     })
+    )
   })
 
   create_newdata <- reactive({
@@ -54,7 +49,7 @@ shinyServer(function(input, output) {
 
     refactored_df <- map2_df(initial_df, kmodel$train_data, function(x, y) {
       if (is.factor(y)) {
-        fct_expand(x, levels(y))
+        factor(x, levels = levels(y))
       } else {
         x
       }
@@ -64,12 +59,30 @@ shinyServer(function(input, output) {
   })
 
   prediction_res <- reactive({
-    str(create_newdata())
     predict(kmodel$rf, newdata = create_newdata(), type = "prob")
   })
 
   output$prediction_probability <- renderText({
     prediction_res()
+  })
+
+   distances <- reactive({
+    ref_vec <- as.vector(data.matrix(create_newdata()))
+    str(ref_vec)
+    ref_distances <- apply(kmatrix, 1, function(k) safely(sqrt(sum(k - ref_vec)^2)))
+    joined_data <- kmodel$train_data %>%
+      mutate(
+        distances = ref_distances,
+        ids = row_number()) %>%
+      arrange(distances) %>%
+      slice(1:5)
+
+    str(joined_data)
+    joined_data
+  })
+
+  output$similar_records <- renderTable({
+    distances()
   })
 
 })
