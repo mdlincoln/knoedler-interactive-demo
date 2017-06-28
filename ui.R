@@ -11,6 +11,8 @@ shinyUI(fluidPage(
 
   inputPanel(
     uiOutput("newdata_inputs")
-  )
+  ),
+  mainPanel(
+    h1(textOutput("prediction_probability")))
 
 ))
