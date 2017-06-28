@@ -12,20 +12,18 @@ shinyServer(function(input, output) {
   }
 
   numeric_input <- function(df, cname) {
-    sliderInput(cname, label = cname, min = quantile(df[[cname]], 0.05), max = quantile(df[[cname]], 0.90), value = median(df[[cname]]))
+    sliderInput(cname, label = cname, min = 0, max = quantile(df[[cname]], 0.90), value = median(df[[cname]]))
   }
 
   output$newdata_inputs <- renderUI({
     vartypes <- map_chr(kmodel$train_data, class)
 
-    fluidRow(
     map2(vartypes, names(vartypes), function(x, y) {
       input_function <- switch(x,
                              "factor" = factor_input,
                              "numeric" = numeric_input)
       input_function(kmodel$train_data, y)
     })
-    )
   })
 
   create_newdata <- reactive({
@@ -62,14 +60,22 @@ shinyServer(function(input, output) {
     predict(kmodel$rf, newdata = create_newdata(), type = "prob")
   })
 
-  output$prediction_probability <- renderText({
-    prediction_res()
+  output$prediction_probability <- renderPlot({
+    prediction_res() %>%
+      as.data.frame() %>%
+      gather(prediction, probability, gain:loss) %>%
+      ggplot(aes(x = prediction, y = probability, fill = prediction)) +
+      scale_fill_manual(values = c("gain" = "green", "loss" = "red")) +
+      geom_bar(stat = "identity") +
+      geom_hline(yintercept = 0.5, linetype = 2) +
+      geom_text(aes(label = probability), vjust = -1) +
+      ylim(0, 1) +
+      theme(legend.position = "none")
   })
 
    distances <- reactive({
-    ref_vec <- as.vector(data.matrix(create_newdata()))
-    str(ref_vec)
-    ref_distances <- apply(kmatrix, 1, function(k) safely(sqrt(sum(k - ref_vec)^2)))
+    ref_vec <- log(as.vector(data.matrix(create_newdata()))) * modelimp
+    ref_distances <- apply(log(kmatrix), 1, function(k) sqrt(sum(k * modelimp - ref_vec)^2))
     joined_data <- kmodel$train_data %>%
       mutate(
         distances = ref_distances,
@@ -77,8 +83,9 @@ shinyServer(function(input, output) {
       arrange(distances) %>%
       slice(1:5)
 
-    str(joined_data)
-    joined_data
+    kexemplar %>%
+      slice(joined_data$ids) %>%
+      select(knoedler_number, artist, genre, purch_amount, purch_currency, seller, buyer, sale_date, profit_percent)
   })
 
   output$similar_records <- renderTable({

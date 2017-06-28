@@ -6,7 +6,13 @@
 #
 
 shinyUI(fluidPage(
-  inputPanel(uiOutput("newdata_inputs")),
-  h1(textOutput("prediction_probability")),
-  tableOutput("distances")
-))
+
+  sidebarLayout(
+    sidebarPanel(fluidRow(uiOutput("newdata_inputs"))),
+    mainPanel(
+      h2("Predicted chance of profit or loss"),
+      plotOutput("prediction_probability"),
+      h2("Similar types of sales"),
+      tableOutput("similar_records")
+    )
+  )))
