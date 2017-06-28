@@ -9,10 +9,11 @@ library(shiny)
 
 shinyUI(fluidPage(
 
-  inputPanel(
+  sidebarLayout(
+  sidebarPanel(
     uiOutput("newdata_inputs")
   ),
   mainPanel(
     h1(textOutput("prediction_probability")))
-
+)
 ))
