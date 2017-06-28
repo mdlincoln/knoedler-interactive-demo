@@ -16,7 +16,9 @@ shinyServer(function(input, output) {
   }
 
   output$newdata_inputs <- renderUI({
-    vartypes <- map_chr(kmodel$train_data, class)
+    vartypes <- kmodel$train_data %>%
+      select(genre, deflated_purch_amount, time_in_stock, buyer_type, is_old_master) %>%
+      map_chr(class)
 
     map2(vartypes, names(vartypes), function(x, y) {
       input_function <- switch(x,
@@ -27,23 +29,29 @@ shinyServer(function(input, output) {
   })
 
   create_newdata <- reactive({
+    # fct_mode <- function(f) {
+    #   as.character(fct_count(f, sort = TRUE)[[1]][1])
+    # }
+
     initial_df <- data.frame(
       genre = input$genre,
-      is_firsttime_seller = input$is_firsttime_seller,
-      is_major_seller = input$is_major_seller,
-      is_firsttime_buyer = input$is_firsttime_buyer,
-      is_major_buyer = input$is_major_buyer,
+      is_firsttime_seller = first(kmodel$train_data$is_firsttime_seller),
+      is_major_seller = first(kmodel$train_data$is_major_seller),
+      is_firsttime_buyer = first(kmodel$train_data$is_firsttime_buyer),
+      is_major_buyer = first(kmodel$train_data$is_major_buyer),
       is_old_master = input$is_old_master,
       deflated_purch_amount = input$deflated_purch_amount,
-      is_jointly_owned = input$is_jointly_owned,
+      is_jointly_owned = first(kmodel$train_data$is_jointly_owned),
       buyer_type = input$buyer_type,
-      seller_type = input$seller_type,
-      owner_shared_nationality = input$owner_shared_nationality,
-      seller_artist_shared_nationality = input$seller_artist_shared_nationality,
-      buyer_artist_shared_nationality = input$buyer_artist_shared_nationality,
-      artist_is_alive = input$artist_is_alive,
+      seller_type = first(kmodel$train_data$seller_type),
+      owner_shared_nationality = first(kmodel$train_data$owner_shared_nationality),
+      seller_artist_shared_nationality = first(kmodel$train_data$seller_artist_shared_nationality),
+      buyer_artist_shared_nationality = first(kmodel$train_data$buyer_artist_shared_nationality),
+      artist_is_alive = first(kmodel$train_data$artist_is_alive),
       time_in_stock = input$time_in_stock
     )
+
+    str(initial_df)
 
     refactored_df <- map2_df(initial_df, kmodel$train_data, function(x, y) {
       if (is.factor(y)) {
@@ -85,11 +93,16 @@ shinyServer(function(input, output) {
 
     kexemplar %>%
       slice(joined_data$ids) %>%
-      select(knoedler_number, artist, genre, purch_amount, purch_currency, seller, buyer, sale_date, profit_percent)
+      select(knoedler_number, artist, purch_amount, purch_currency, seller, buyer, sale_year, profit_percent)
   })
 
   output$similar_records <- renderTable({
     distances()
+  })
+
+  output$hypothetical_description <- renderText({
+    paste0(
+      "A ", input$genre, " painting, originally purcahsed for ", input$deflated_purch_amount, " US dollars (in 1900 terms) and sold to a ", input$buyer_type, " ", input$time_in_stock, " days after coming into Knoedler's stock.")
   })
 
 })

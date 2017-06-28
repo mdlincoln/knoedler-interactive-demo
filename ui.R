@@ -6,13 +6,17 @@
 #
 
 shinyUI(fluidPage(
-
+  titlePanel("What would Knoedler do?"),
   sidebarLayout(
-    sidebarPanel(fluidRow(uiOutput("newdata_inputs"))),
+    sidebarPanel(
+      p("Create a hypothetical transaction by tweaking these settings"),
+      fluidRow(uiOutput("newdata_inputs"))
+    ),
     mainPanel(
+      textOutput("hypothetical_description"),
       h2("Predicted chance of profit or loss"),
       plotOutput("prediction_probability"),
-      h2("Similar types of sales"),
+      h2("Similar sales from the actual stockbooks"),
       tableOutput("similar_records")
     )
   )))
