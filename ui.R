@@ -7,10 +7,11 @@
 
 shinyUI(fluidPage(
   titlePanel("What would Knoedler do?"),
+  p("A toy application to demonstrate what it might mean to use interactivity to elucidate an approach."),
   sidebarLayout(
     sidebarPanel(
       p("Create a hypothetical transaction by tweaking these settings"),
-      fluidRow(uiOutput("newdata_inputs"))
+      uiOutput("newdata_inputs")
     ),
     mainPanel(
       textOutput("hypothetical_description"),
