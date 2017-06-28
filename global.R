@@ -2,9 +2,6 @@ library(shiny)
 library(tidyverse)
 library(forcats)
 library(randomForest)
-library(GPIdata)
-library(DT)
-
 
 kmodel <- readRDS("kmodel.rds")
 modelimp <- kmodel$rf$importance[,4]
